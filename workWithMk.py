@@ -1,4 +1,4 @@
-# -*- coding: windows-1251 -*-
+# -*- coding: utf-8 -*-
 
 import requests
 import json
@@ -6,22 +6,24 @@ from urllib.request import urlopen
 from urllib.request import urljoin
 from lxml.html import fromstring
 import supportingFunc as support
+import xlwt
+import os
 
-def getJsonMK():
+def getJsonMK(region):
     """
-    Функция отправляет POST запрос на сайт, запрашивая все объекты культурного наследия в регионе "Карелия".
-    Ответ получает в виде JSON файла.
+    Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІР»СЏРµС‚ POST Р·Р°РїСЂРѕСЃ РЅР° СЃР°Р№С‚, Р·Р°РїСЂР°С€РёРІР°СЏ РІСЃРµ РѕР±СЉРµРєС‚С‹ РєСѓР»СЊС‚СѓСЂРЅРѕРіРѕ РЅР°СЃР»РµРґРёСЏ РІ СЂРµРіРёРѕРЅРµ "РљР°СЂРµР»РёСЏ".
+    РћС‚РІРµС‚ РїРѕР»СѓС‡Р°РµС‚ РІ РІРёРґРµ JSON С„Р°Р№Р»Р°.
 
     :return dict:
     """
 
-    #тип передаваемого сообщения
+    #С‚РёРї РїРµСЂРµРґР°РІР°РµРјРѕРіРѕ СЃРѕРѕР±С‰РµРЅРёСЏ
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
-    #тело запроса
+    #С‚РµР»Рѕ Р·Р°РїСЂРѕСЃР°
     data = "data%5B0%5D%5Bname%5D=CultureObjects%5Bcob_reg_number%5D&data%5B0%5D%5Bvalue%5D=&data%5B1%5D%5Bname%5D=" \
            "CultureObjects%5Bcob_name%5D&data%5B1%5D%5Bvalue%5D=&data%5B2%5D%5Bname%5D=" \
-           "CultureObjects%5Bcob_ter_nnn%5D&data%5B2%5D%5Bvalue%5D=10&data%5B3%5D%5Bname%5D=" \
+           "CultureObjects%5Bcob_ter_nnn%5D&data%5B2%5D%5Bvalue%5D=" + str(region) + "&data%5B3%5D%5Bname%5D=" \
            "CultureObjects%5Bcob_address%5D&data%5B3%5D%5Bvalue%5D=&data%5B4%5D%5Bname%5D=" \
            "CultureObjects%5Bcob_category_type%5D&data%5B4%5D%5Bvalue%5D=&data%5B5%5D%5Bname%5D=" \
            "CultureObjects%5Bcob_object_type%5D&data%5B5%5D%5Bvalue%5D=&data%5B6%5D%5Bname%5D=" \
@@ -34,34 +36,60 @@ def getJsonMK():
     urlForGetJson = "https://okn-mk.mkrf.ru/Maps/searchMap"
 
     request = requests.request('POST', urlForGetJson, data=data, headers=headers) # response 200
-    textJson = json.loads(request.text, encoding='utf-8') # представляет в строку, но формат "словарь"
-    #print(request.text) # удобочитаемое представление
+    textJson = json.loads(request.text, encoding='utf-8') # РїСЂРµРґСЃС‚Р°РІР»СЏРµС‚ РІ СЃС‚СЂРѕРєСѓ, РЅРѕ С„РѕСЂРјР°С‚ "СЃР»РѕРІР°СЂСЊ"
+    #print(request.text) # СѓРґРѕР±РѕС‡РёС‚Р°РµРјРѕРµ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёРµ
 
     return textJson
 
 def fillListMK():
     """
-    C помощью данных из JSON используем id для перехода на нужную страницу сайта и извлекаем в словарь
-    нужные нам данные.
+    C РїРѕРјРѕС‰СЊСЋ РґР°РЅРЅС‹С… РёР· JSON РёСЃРїРѕР»СЊР·СѓРµРј id РґР»СЏ РїРµСЂРµС…РѕРґР° РЅР° РЅСѓР¶РЅСѓСЋ СЃС‚СЂР°РЅРёС†Сѓ СЃР°Р№С‚Р° Рё РёР·РІР»РµРєР°РµРј РІ СЃР»РѕРІР°СЂСЊ
+    РЅСѓР¶РЅС‹Рµ РЅР°Рј РґР°РЅРЅС‹Рµ.
 
     :return list of dict:
     """
 
-    # ------------------------- Заполняем из JSON -------------------------------------
-    textJson = getJsonMK()
+    # ------------------------- Р—Р°РїРѕР»РЅСЏРµРј РёР· JSON -------------------------------------
+    region = 0
+    countRussianRegion = 93
 
-    listOfDictionary = []  # список для хранения массива словарей с id, координаты
+    try:
+        os.mkdir("mkrfFiles")
+    except:
+        print('file will be save in "mkrfFiles"')
+    os.chdir("mkrfFiles")
 
-    i = 0  # не тру питоновский счётчик
-    for features in textJson["features"]: # переписываем данные в удобный словарь
-        i = i + 1  # счетчик записей
-        mainDictionary = {}  # словарь для заполнения
+    while True:
+        try:
+            print("Р’С‹Р±РµСЂРёС‚Рµ РЅРѕРјРµСЂ СЂРµРіРёРѕРЅР° \t !РћР¶РёРґР°РµС‚СЃСЏ С‡РёСЃР»РѕРІРѕР№ С„РѕСЂРјР°С‚ РѕС‚ 1 РґРѕ 92")
+            region = int(input())
+            if (region > 0 and region < countRussianRegion):
+                print("РќСѓР¶РЅС‹Р№ СЂРµРіРёРѕРЅ РЅР°Р№РґРµРЅ")
+                break
+            else:
+                print("Р’С‹ РІС‹Р±СЂР°Р»Рё РЅРµРїСЂР°РІРёР»СЊРЅС‹Р№ СЂРµРіРёРѕРЅ\nРЎРјРѕС‚СЂРё 'РЎРїРёСЃРѕРєР РµРіРёРѕРЅРѕРІР”Р»СЏРњРёРЅРєСѓР»СЊС‚Р°.txt'")
 
-        # print(features['id']) # проверочка
-        # print(features['geometry']) # проверочка №2
-        # print(features['geometry']['coordinates'][0]) # проверочка
+        except:
+            print("РћР¶РёРґР°РµС‚СЃСЏ С‡РёСЃР»РѕРІРѕР№ С„РѕСЂРјР°С‚")
+            continue
+
+    textJson = getJsonMK(region)
+
+    listOfDictionary = []  # СЃРїРёСЃРѕРє РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РјР°СЃСЃРёРІР° СЃР»РѕРІР°СЂРµР№ СЃ id, РєРѕРѕСЂРґРёРЅР°С‚С‹
+
+    i = 0  # РЅРµ С‚СЂСѓ РїРёС‚РѕРЅРѕРІСЃРєРёР№ СЃС‡С‘С‚С‡РёРє
+    for features in textJson["features"]: # РїРµСЂРµРїРёСЃС‹РІР°РµРј РґР°РЅРЅС‹Рµ РІ СѓРґРѕР±РЅС‹Р№ СЃР»РѕРІР°СЂСЊ
+        i = i + 1  # СЃС‡РµС‚С‡РёРє Р·Р°РїРёСЃРµР№
+        mainDictionary = {}  # СЃР»РѕРІР°СЂСЊ РґР»СЏ Р·Р°РїРѕР»РЅРµРЅРёСЏ
+
+        # print(features['id']) # РїСЂРѕРІРµСЂРѕС‡РєР°
+        # print(features['geometry']) # РїСЂРѕРІРµСЂРѕС‡РєР° в„–2
+        # print(features['geometry']['coordinates'][0]) # РїСЂРѕРІРµСЂРѕС‡РєР°
         # print(features['geometry']['coordinates'][1])
         # print("\n")
+
+
+
 
         mainDictionary['count'] = i
         mainDictionary['id'] = features['id']
@@ -70,27 +98,38 @@ def fillListMK():
 
         listOfDictionary.append(mainDictionary)
 
-    #проверка заполнения
+    #РїСЂРѕРІРµСЂРєР° Р·Р°РїРѕР»РЅРµРЅРёСЏ
     #for i in listOfDictionary:
     #   print("Count: ", i['count'], "| id: ", i['id'], "| coord_1:", i['coordinate_1'], "| cord_2: ",
     #          i['coordinate_2'], '\n')
 
 
-    # ------------------------- Заполнение по id через сайт --------------------------------------
+    # workbook = xlwt.Workbook()
+    # sheet = workbook.add_sheet('list')
+    # sheet.write(0, 1, "Count")
+    # sheet.write(0, 2, "Id")
+    # sheet.write(0, 4, "RegNumber")
+    # sheet.write(0, 5, "Url")
+    # sheet.write(0, 6, "Coordinate_1")
+    # sheet.write(0, 7, "Coordinate_2")
 
-    urlForSearch = "https://okn-mk.mkrf.ru/cultureObjects/viewMaps/" # + id объекта
+    # ------------------------- Р—Р°РїРѕР»РЅРµРЅРёРµ РїРѕ id С‡РµСЂРµР· СЃР°Р№С‚ --------------------------------------
 
-    #Дозаполняем информацию для каждого элемента в списке словарей
+    urlForSearch = "https://okn-mk.mkrf.ru/cultureObjects/viewMaps/" # + id РѕР±СЉРµРєС‚Р°
+
+    #Р”РѕР·Р°РїРѕР»РЅСЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ РґР»СЏ РєР°Р¶РґРѕРіРѕ СЌР»РµРјРµРЅС‚Р° РІ СЃРїРёСЃРєРµ СЃР»РѕРІР°СЂРµР№
+    i = 0
+    countErrors = 0
     for object in listOfDictionary:
         try:
-            #подготовка данных
-            urlid = urljoin(urlForSearch, str(object['id'])) # формируем url
+            #РїРѕРґРіРѕС‚РѕРІРєР° РґР°РЅРЅС‹С…
+            urlid = urljoin(urlForSearch, str(object['id'])) # С„РѕСЂРјРёСЂСѓРµРј url
             httpResponse = urlopen(urlid) # 200
-            list_html = httpResponse.read().decode('utf-8') # Тут уже почемуто кодировка utf-8? непонятный сайт..
+            list_html = httpResponse.read().decode('utf-8') # РўСѓС‚ СѓР¶Рµ РїРѕС‡РµРјСѓС‚Рѕ РєРѕРґРёСЂРѕРІРєР° utf-8? РЅРµРїРѕРЅСЏС‚РЅС‹Р№ СЃР°Р№С‚..
             list_doc = fromstring(list_html)
 
-            #извлекаем по css классу
-            name = list_doc.cssselect('div.clearfix')[0] # без индекса даже одно единственное совпадение записывается как список
+            #РёР·РІР»РµРєР°РµРј РїРѕ css РєР»Р°СЃСЃСѓ
+            name = list_doc.cssselect('div.clearfix')[0] # Р±РµР· РёРЅРґРµРєСЃР° РґР°Р¶Рµ РѕРґРЅРѕ РµРґРёРЅСЃС‚РІРµРЅРЅРѕРµ СЃРѕРІРїР°РґРµРЅРёРµ Р·Р°РїРёСЃС‹РІР°РµС‚СЃСЏ РєР°Рє СЃРїРёСЃРѕРє
             reg = list_doc.cssselect('.col-sm-12 > div:nth-child(3)')[0]
 
             """
@@ -105,8 +144,8 @@ def fillListMK():
             """
             clearReg = support.removeAllUseless(reg.text)
 
-            # Потому что кол-во пунктов отличается. И Регистрационный номер может быть на 2 или 3 месте.
-            if (clearReg  == "Наименование объекта:"):
+            # РџРѕС‚РѕРјСѓ С‡С‚Рѕ РєРѕР»-РІРѕ РїСѓРЅРєС‚РѕРІ РѕС‚Р»РёС‡Р°РµС‚СЃСЏ. Р Р РµРіРёСЃС‚СЂР°С†РёРѕРЅРЅС‹Р№ РЅРѕРјРµСЂ РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅР° 2 РёР»Рё 3 РјРµСЃС‚Рµ.
+            if (clearReg  == "РќР°РёРјРµРЅРѕРІР°РЅРёРµ РѕР±СЉРµРєС‚Р°:"):
                regNumber = list_doc.cssselect('.col-sm-12 > div:nth-child(2)')[0]
             else:
                regNumber = list_doc.cssselect('.col-sm-12 > div:nth-child(3)')[0]
@@ -116,14 +155,65 @@ def fillListMK():
 
             object['regNumber'] = support.removeAllUseless(regNumber.text)
             object['url'] = urlid
-            object['name'] = support.removeAllUseless(name.text)  # потому что с сайта приходят в непонятном обрамлении
+            object['name'] = support.removeAllUseless(name.text)  # РїРѕС‚РѕРјСѓ С‡С‚Рѕ СЃ СЃР°Р№С‚Р° РїСЂРёС…РѕРґСЏС‚ РІ РЅРµРїРѕРЅСЏС‚РЅРѕРј РѕР±СЂР°РјР»РµРЅРёРё
+            object['errorParsing'] =False
 
-            #print(object)
+            # print(object['name'])
 
         except:
-            exit(100)
+            print("Error in: " + object['url'])
+            object['errorParsing'] = True
+            countErrors += 1
+            continue
+
+    workbook = xlwt.Workbook()
+    sheet = workbook.add_sheet('list')
+    sheet.write(0, 0, "Count")
+    sheet.write(0, 1, "Id")
+    sheet.write(0, 2, "RegNumber")
+    sheet.write(0, 3, "Url")
+    sheet.write(0, 4, "Coordinate_1")
+    sheet.write(0, 5, "Coordinate_2")
 
 
+    row = 1
+    for item in listOfDictionary:
+        column = 0
+
+        sheet.write(row, column, item['count'])
+        column += 1
+        sheet.write(row, column, item['id'])
+        column += 1
+        sheet.write(row, column, item['regNumber'])
+        column += 1
+        sheet.write(row, column, item['url'])
+        column += 1
+        sheet.write(row, column, item['coordinate_1'])
+        column += 1
+        sheet.write(row, column, item['coordinate_2'])
+        column += 1
+
+        row += 1
+        workbook.save('reg_' + str(region) + '_mkrf.xls')
+
+    """
+    f = open("NewReestr.txt", "w")
+    for i in listOfDictionary:
+        f.write("\n______________________________________________")
+        f.write("%s\n" % i['count'])
+        f.write("%s\n" % i['id'])
+        f.write("%s\n" % i['regNumber'])
+        f.write("%s\n" % i['url'])
+        f.write("%s\n" % i['coordinate_1'])
+        f.write("%s\n" % i['coordinate_2'])
+        f.write("\n______________________________________________")
+    f.write("\n====================================================")
+    f.write("%s\n" % "РћС‚С‡РµС‚ РїРѕ СЂРµРіРёРѕРЅСѓ")
+    f.write("%s\n" % "Р’СЃРµРіРѕ РѕР±СЉРµРєС‚РѕРІ РєСѓР»СЊС‚СѓСЂРЅРѕРіРѕ РЅР°СЃР»РµРґРёСЏ РІ СЂРµРіРёРѕРЅРµ%s" % listOfDictionary['count'])
+    f.write("%s\n" % "РћС€РёР±РѕРє РїСЂРё РїР°СЂСЃРёРЅРіРµ%s" % countErrors)
+
+
+    f.close()
 
 
 
@@ -136,6 +226,6 @@ def fillListMK():
               "\t| Coord_1:",                  i['coordinate_1'], '\n',
               "\t| Cord_2: ",                  i['coordinate_2'], '\n',
             "______________________________________________________________" )
-
+    """
 
     return listOfDictionary

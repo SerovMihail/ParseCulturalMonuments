@@ -7,7 +7,8 @@ from urllib.request import urlopen
 from urllib.request import urljoin
 from lxml.html import fromstring
 import requests
-
+import os
+import xlwt
 
 
 def getNameAndHref():
@@ -111,10 +112,25 @@ def fillListWiki():
 
     listRegions = [] # список списков словарей
 
+    try:
+        os.mkdir("wikiFiles")
+    except:
+        print('file will be save in "WikiFiles"')
+    os.chdir("wikiFiles")
+
+    workbook = xlwt.Workbook()
+
     for pageid in allPagesId: # для каждой pageid
 
         f = wptools.page(wiki="ru.wikivoyage.org/w/api.php", pageid=pageid).get_parse()  # Получили class <str>
 
+        sheet = workbook.add_sheet('list' + str(f.title.split("/")[2]))
+        sheet.write(0, 0, "Id")
+        sheet.write(0, 1, "Name")
+        sheet.write(0, 2, "knid")
+        sheet.write(0, 3, "newId")
+        sheet.write(0, 4, "district")
+        sheet.write(0, 5, "address")
 
         listOfData = [] # список словарей
 
@@ -123,6 +139,7 @@ def fillListWiki():
 
 
         countInNewRegister = 0
+
         #count был раньше перед item
         for item in wikiText:
 
@@ -183,29 +200,60 @@ def fillListWiki():
 
             listOfData.append(dictionary)
 
+        # sheet = workbook.add_sheet('list' + str(f.title.split("/")[2]))
+        # sheet.write(0, 0, "Id")
+        # sheet.write(0, 1, "Name")
+        # sheet.write(0, 2, "knid")
+        # sheet.write(0, 3, "newId")
+        # sheet.write(0, 4, "district")
+        # sheet.write(0, 5, "address")
 
-
-        namefile = (f.title.split("/")[2])
+        row = 1
         count = 0
-        f = open(namefile, "w" )
-        for i in listOfData:
-            count = count + 1
-            f.write("\n______________________________________________")
-            i['id'] = count
-            f.write("%s\n" % i['id'])
-            f.write("%s\n" % i['name'])
-            f.write("%s\n" % i['knid'])
-            f.write("%s\n" % i['newid'])
-            f.write("%s\n" % i['district'])
-            f.write("%s\n" % i['address'])
-            f.write("\n______________________________________________")
-        f.write("\n====================================================")
-        f.write("%s\n" % "Отчет по региону")
-        f.write("%s\n" % "Всего объектов культурного наследия в регионе%s" %  str(count))
-        f.write("%s\n" % "Объектов которые занесены в новый реестр http://mkrf.ru/%s" %  str(countInNewRegister))
-        f.write("%s\n" % "Следует занести в новый реестр%s" %  str(count - countInNewRegister))
+        for item in listOfData:
+            column = 0
+            count += 1
 
-        f.close()
+            sheet.write(row, column, count)
+            column += 1
+            sheet.write(row, column, item['name'])
+            column += 1
+            sheet.write(row, column, item['knid'])
+            column += 1
+            sheet.write(row, column, item['newid'])
+            column += 1
+            sheet.write(row, column, item['district'])
+            column += 1
+            sheet.write(row, column, item['address'])
+            column += 1
+
+            row += 1
+
+        # workbook.save('region_' + (f.title.split("/")[2]) + '_wiki.xls')
+        workbook.save('wikiRegions.xls')
+        countInNewRegister += 1
+
+        # namefile = (f.title.split("/")[2])
+        # count = 0
+        # f = open(namefile, "w" )
+        # for i in listOfData:
+        #     count = count + 1
+        #     f.write("\n______________________________________________\n\n")
+        #     i['id'] = count
+        #     f.write("%s\n" % i['id'])
+        #     f.write("%s\n" % i['name'])
+        #     f.write("%s\n" % i['knid'])
+        #     f.write("%s\n" % i['newid'])
+        #     f.write("%s\n" % i['district'])
+        #     f.write("%s\n" % i['address'])
+        #     f.write("\n______________________________________________")
+        # f.write("\n====================================================")
+        # f.write("%s\n" % "Отчет по региону")
+        # f.write("%s\n" % "Всего объектов культурного наследия в регионе%s" %  str(count))
+        # f.write("%s\n" % "Объектов которые занесены в новый реестр http://mkrf.ru/%s" %  str(countInNewRegister))
+        # f.write("%s\n" % "Следует занести в новый реестр%s" %  str(count - countInNewRegister))
+        #
+        # f.close()
 
 
         """
