@@ -112,17 +112,20 @@ def fillListWiki():
 
     listRegions = [] # список списков словарей
 
-    try:
-        os.mkdir("wikiFiles")
-    except:
-        print('file will be save in "WikiFiles"')
-    os.chdir("wikiFiles")
-
+    # try:
+    #     os.mkdir("wikiFiles")
+    # except:
+    #     print('file will be save in "WikiFiles"')
+    # os.chdir("wikiFiles")
+    #
     workbook = xlwt.Workbook()
 
     for pageid in allPagesId: # для каждой pageid
 
+
         f = wptools.page(wiki="ru.wikivoyage.org/w/api.php", pageid=pageid).get_parse()  # Получили class <str>
+
+
 
         sheet = workbook.add_sheet('list' + str(f.title.split("/")[2]))
         sheet.write(0, 0, "Id")
@@ -131,6 +134,8 @@ def fillListWiki():
         sheet.write(0, 3, "newId")
         sheet.write(0, 4, "district")
         sheet.write(0, 5, "address")
+
+
 
         listOfData = [] # список словарей
 
@@ -145,7 +150,7 @@ def fillListWiki():
 
             text = item.split("|") # разделяем запись на отдельные строки
 
-            #print(text)
+            # print(text)
 
             name = ""
             knid = ""
@@ -155,6 +160,9 @@ def fillListWiki():
             address = ""
 
             for i in text:
+
+                i = re.sub("/^\s+/g", '', i).replace(" ", "")
+
 
                 if (re.match(r'name', i)):
                     name = i
@@ -187,18 +195,25 @@ def fillListWiki():
 
             # split после = и вторая часть. Мы отбрасывает ненужную часть строки. Т.к идентификатор будет в key словаря
             #dictionary['id'] = count
-            dictionary['name'] = name.split("=")[1]
-            dictionary['knid'] = support.removeAllUseless(knid).split("=")[1]
-            dictionary['district'] = support.removeAllUseless(district).split("=")[1] # ������ ����� �����
-            dictionary['address'] = address.split("=")[1]
-            if (inNewRegistry==True):
-                dictionary['inNewRegister'] = True
-                dictionary['newid'] = support.removeAllUseless(newid).split("=")[1]
-            elif (inNewRegistry==False):
-                dictionary['newid'] = "No in new register"
+            try:
+                dictionary['name'] = name.split("=")[1]
+                dictionary['knid'] = support.removeAllUseless(knid).split("=")[1]
+                dictionary['district'] = support.removeAllUseless(district).split("=")[1] # ������ ����� �����
+                dictionary['address'] = address.split("=")[1]
+                if (inNewRegistry==True):
+                    dictionary['inNewRegister'] = True
+                    dictionary['newid'] = support.removeAllUseless(newid).split("=")[1]
+                elif (inNewRegistry==False):
+                    dictionary['newid'] = "No in new register"
+            except:
+                print("error in ", dictionary);
 
+
+            # print(listOfData)
 
             listOfData.append(dictionary)
+
+
 
         # sheet = workbook.add_sheet('list' + str(f.title.split("/")[2]))
         # sheet.write(0, 0, "Id")

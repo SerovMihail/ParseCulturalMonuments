@@ -53,11 +53,11 @@ def fillListMK():
     region = 0
     countRussianRegion = 93
 
-    try:
-        os.mkdir("mkrfFiles")
-    except:
-        print('file will be save in "mkrfFiles"')
-    os.chdir("mkrfFiles")
+    # try:
+    #     os.mkdir("mkrfFiles")
+    # except:
+    #     print('file will be save in "mkrfFiles"')
+    # os.chdir("mkrfFiles")
 
     while True:
         try:
@@ -158,7 +158,7 @@ def fillListMK():
             object['name'] = support.removeAllUseless(name.text)  # потому что с сайта приходят в непонятном обрамлении
             object['errorParsing'] =False
 
-            # print(object['name'])
+            print(object['name'])
 
         except:
             print("Error in: " + object['url'])
@@ -174,7 +174,8 @@ def fillListMK():
     sheet.write(0, 3, "Url")
     sheet.write(0, 4, "Coordinate_1")
     sheet.write(0, 5, "Coordinate_2")
-
+    sheet.write(0, 6, "In wiki")
+    workbook.save('reg_' + str(region) + '_mkrf.xls')
 
     row = 1
     for item in listOfDictionary:
