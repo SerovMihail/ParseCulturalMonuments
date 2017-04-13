@@ -7,7 +7,6 @@ from urllib.request import urlopen
 from urllib.request import urljoin
 from lxml.html import fromstring
 import requests
-import os
 import xlwt
 
 
@@ -120,7 +119,12 @@ def fillListWiki():
     #
     workbook = xlwt.Workbook()
 
+    processedPages = 0
+
     for pageid in allPagesId: # для каждой pageid
+
+        processedPages += 1
+        print("Ресурс обработан на %.2f" % (processedPages / len(allPagesId) * 100) , " %")
 
 
         f = wptools.page(wiki="ru.wikivoyage.org/w/api.php", pageid=pageid).get_parse()  # Получили class <str>
@@ -247,29 +251,6 @@ def fillListWiki():
         # workbook.save('region_' + (f.title.split("/")[2]) + '_wiki.xls')
         workbook.save('wikiRegions.xls')
         countInNewRegister += 1
-
-        # namefile = (f.title.split("/")[2])
-        # count = 0
-        # f = open(namefile, "w" )
-        # for i in listOfData:
-        #     count = count + 1
-        #     f.write("\n______________________________________________\n\n")
-        #     i['id'] = count
-        #     f.write("%s\n" % i['id'])
-        #     f.write("%s\n" % i['name'])
-        #     f.write("%s\n" % i['knid'])
-        #     f.write("%s\n" % i['newid'])
-        #     f.write("%s\n" % i['district'])
-        #     f.write("%s\n" % i['address'])
-        #     f.write("\n______________________________________________")
-        # f.write("\n====================================================")
-        # f.write("%s\n" % "Отчет по региону")
-        # f.write("%s\n" % "Всего объектов культурного наследия в регионе%s" %  str(count))
-        # f.write("%s\n" % "Объектов которые занесены в новый реестр http://mkrf.ru/%s" %  str(countInNewRegister))
-        # f.write("%s\n" % "Следует занести в новый реестр%s" %  str(count - countInNewRegister))
-        #
-        # f.close()
-
 
         """
         for i in listOfData:

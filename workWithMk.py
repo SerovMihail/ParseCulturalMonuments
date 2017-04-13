@@ -7,7 +7,7 @@ from urllib.request import urljoin
 from lxml.html import fromstring
 import supportingFunc as support
 import xlwt
-import os
+
 
 def getJsonMK(region):
     """
@@ -120,8 +120,15 @@ def fillListMK():
     #Дозаполняем информацию для каждого элемента в списке словарей
     i = 0
     countErrors = 0
+
+    processedPages = 0
+
+
     for object in listOfDictionary:
         try:
+            processedPages += 1
+            print("Ресурс обработан на %.2f" % (processedPages / len(listOfDictionary) * 100) , " %")
+
             #подготовка данных
             urlid = urljoin(urlForSearch, str(object['id'])) # формируем url
             httpResponse = urlopen(urlid) # 200
@@ -158,7 +165,7 @@ def fillListMK():
             object['name'] = support.removeAllUseless(name.text)  # потому что с сайта приходят в непонятном обрамлении
             object['errorParsing'] =False
 
-            print(object['name'])
+            # print(object['name'])
 
         except:
             print("Error in: " + object['url'])

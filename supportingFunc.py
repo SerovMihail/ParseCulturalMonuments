@@ -6,72 +6,62 @@ import time as t
 import workWithWiki
 import workWithMk
 from xlutils.copy import copy
-
-
-def removeAllUseless(text):
-    """
-    Для удаления лишнего из текста
-    :param text:
-    :return text:
-    """
-
-    try:
-        result = re.sub("^\s+|\n|\r|\s+$", '', text) # Убирает все отступы, переносы, пробелы
-    except:
-        result = "12 = 12"
-
-    return result
-
+import os
 
 def checkLastUpdate():
-    chacheTime = 4
+    chacheTime = 4 # Изменить дэльту времени тут <====
+    firstStart = False
 
     try:
         rb = xlrd.open_workbook('lastUpdate.xls', formatting_info=True)
+        sheet = rb.sheet_by_index(0)
+        timeUpdate = sheet.row_values(1)[0]
+        timeUpdate = datetime.datetime.fromtimestamp(float(timeUpdate))
+        print("Данные обновлялись __ ", timeUpdate, " __ ")
+        delta = datetime.timedelta(hours=chacheTime)
+        timeUpdate = timeUpdate + delta
     except:
-        setLastUpdate()
-        rb = xlrd.open_workbook('lastUpdate.xls', formatting_info=True)
+        firstStart = True
 
-    sheet = rb.sheet_by_index(0)
-    timeUpdate =  sheet.row_values(1)[0]
-    timeUpdate = datetime.datetime.fromtimestamp(float(timeUpdate))
-    print("Данные обновлялись __ ", timeUpdate, " __ ")
-    actualDate = datetime.timedelta(hours=chacheTime)
-    timeUpdate = timeUpdate - actualDate
+    if (firstStart == True):
+        print("Файл с данными об обновлениях не найден. Запустить обновление? (Да/Нет)")
+    elif (timeUpdate > datetime.datetime.now()):
+        print("Данные обновлялись меньше", chacheTime, "-х часов назад\nПродолжить обновление? (Да/Нет)")
+    elif (timeUpdate < datetime.datetime.now()):
+        print("Данные обновлялись больше", chacheTime, "-х часов назад\nПродолжить обновление? (Да/Нет)")
 
-    if ( datetime.datetime.now() > timeUpdate ):
+    while True:
+        try:
+            accept = str(input())
+            if (accept == 'Да'):
 
-        while True:
-            try:
-                print("Данные обновлялись меньше", chacheTime,"-х часов назад\nПродолжить обновление? (Да/Нет)")
-                accept = str(input())
-                if (accept == 'Да'):
-
-                    workWithWiki.fillListWiki()
+                print("Начинается обработка ресурса wikivoyage.org")
+                workWithWiki.fillListWiki()
 
 
-
-                    workWithMk.fillListMK()
-
-                    setLastUpdate()
-
-                    break
-                if (accept == 'Нет'):
-                    print("Всего доброго, возвращайтесь, когда данные снова устареют")
-                    break
+                print("Начинается обработка ресурса mkrf.ru")
+                workWithMk.fillListMK()
 
 
-                else:
-                    print("Выберите - (Да/Нет)")
-
-            except:
-                print("Ожидается вменяемый ответ ;)")
-                continue
-    else:
-        print(timeUpdate)
+                print("Сохранение результата")
+                setLastUpdate()
 
 
+                print("Проверка на соответствие памятников архитектуры двух ресурсов")
+                compare2files('wikiRegions.xls', 'reg_10_mkrf.xls')
 
+                break
+            if (accept == 'Нет'):
+                print("Всего доброго, возвращайтесь, когда данные снова устареют")
+                break
+
+
+            else:
+                print("Выберите - (Да/Нет)")
+
+        except:
+            print("Аварийное завершение работы. Сработало исключение")
+            continue
 
 def setLastUpdate():
     workbook = xlwt.Workbook()
@@ -95,28 +85,8 @@ def compare2files(path1, path2):
     write_sheet = writeBook.get_sheet(0)
 
 
-    # read_book = xlrd.open_workbook(source_filename, on_demand=True)  # Открываем исходный документ
-    # read_sheet = read_book.get_sheet(0)  # Читаем из первого листа
-    # write_book = xlcopy(read_book)  # Копируем таблицу в память, в неё мы ниже будем записывать
-    # write_sheet = write_book.get_sheet(0)  # Будем записывать в первый лист
-    # write_sheet.write(0, 0, read_sheet.cell_value(0, 0) + 42)  # Прибавим к значению из ячейки "A1" число 42
-    # write_book.save(destination_filename)
-
-
-
-    # print(wikiSheet.cell(1, 0).value)
-    # print(mkrfSheet.cell(1, 0).value)
-
     mkrfIdColumn = 2
     wikiIdColumn = 3
-
-    # style = xlwt.XFStyle()
-
-    # pattern = xlwt.Pattern()
-    # pattern.pattern = xlwt.Pattern.SOLID_PATTERN
-    # pattern.pattern_fore_colour = xlwt.Style.colour_map['red']
-    # style.pattern = pattern
-    # sheet.write(0, 0, "Some data", style)
 
     for mkrfRows in range(mkrfSheet.nrows):
 
@@ -142,3 +112,17 @@ def compare2files(path1, path2):
                     write_sheet.write(mkrfRows, 6, "+")
 
                     writeBook.save(path2)
+
+def removeAllUseless(text):
+    """
+    Для удаления лишнего из текста
+    :param text:
+    :return text:
+    """
+
+    try:
+        result = re.sub("^\s+|\n|\r|\s+$", '', text) # Убирает все отступы, переносы, пробелы
+    except:
+        result = "="
+
+    return result
