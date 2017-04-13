@@ -10,16 +10,13 @@ import requests
 import xlwt
 
 
-def getNameAndHref():
-    pass
-
 def parseAlmostSameBlock(list_doc, lowblock, hightblock):
     """
-    возможно со строки 51 стоит преобрзовать цикл в фукнцию?
+    
     :param list_doc:
     :param lowblock:
     :param hightblock:
-    :return:
+    :return list:
     """
 
     pass
@@ -27,7 +24,8 @@ def parseAlmostSameBlock(list_doc, lowblock, hightblock):
 
 
 def getKareliaDistrictsWiki():
-
+    # Получаем коды страниц для того, чтобы достать информацию
+    
     urlSite = "https://ru.wikivoyage.org/"
 
     kareliaListPages = []
@@ -100,7 +98,7 @@ def getKareliaDistrictsWiki():
 def fillListWiki():
     """
     обработка всех страниц по pageid
-    возвращаем "0" если все данные были записаны в файлы
+    возвращаем лист объектов
 
 
     :return 0:
@@ -110,13 +108,7 @@ def fillListWiki():
 
 
     listRegions = [] # список списков словарей
-
-    # try:
-    #     os.mkdir("wikiFiles")
-    # except:
-    #     print('file will be save in "WikiFiles"')
-    # os.chdir("wikiFiles")
-    #
+    
     workbook = xlwt.Workbook()
 
     processedPages = 0
@@ -217,15 +209,6 @@ def fillListWiki():
 
             listOfData.append(dictionary)
 
-
-
-        # sheet = workbook.add_sheet('list' + str(f.title.split("/")[2]))
-        # sheet.write(0, 0, "Id")
-        # sheet.write(0, 1, "Name")
-        # sheet.write(0, 2, "knid")
-        # sheet.write(0, 3, "newId")
-        # sheet.write(0, 4, "district")
-        # sheet.write(0, 5, "address")
 
         row = 1
         count = 0
