@@ -88,6 +88,7 @@ def compare2files(path1, path2):
     mkrfIdColumn = 2
     wikiIdColumn = 3
 
+    # Для каждой из строк файла mkrf сравниваем id с каждой из строк файла wiki. В соответствующей строке ставим "+", если найдено
     for mkrfRows in range(mkrfSheet.nrows):
 
         mkrfRow = mkrfSheet.row_values(mkrfRows)
